@@ -1,0 +1,133 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Negocio (multi-tenant listo para el futuro) ───────────────────────────
+model Business {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  logoUrl   String?
+  createdAt DateTime @default(now())
+
+  members     Member[]
+  plans       Plan[]
+}
+
+// ─── Miembro / Socio ───────────────────────────────────────────────────────
+model Member {
+  id         String       @id @default(cuid())
+  businessId String
+  email      String
+  name       String
+  phone      String?
+  photoUrl   String?
+  notes      String?
+  status     MemberStatus @default(ACTIVE)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  business     Business      @relation(fields: [businessId], references: [id])
+  memberships  Membership[]
+  payments     Payment[]
+
+  @@unique([businessId, email])
+  @@index([businessId])
+}
+
+enum MemberStatus {
+  ACTIVE
+  INACTIVE
+  OVERDUE
+}
+
+// ─── Plan de membresía ─────────────────────────────────────────────────────
+model Plan {
+  id           String   @id @default(cuid())
+  businessId   String
+  name         String
+  description  String?
+  price        Float
+  intervalDays Int      // 1=diario, 30=mensual, 365=anual
+  classLimit   Int?     // null = ilimitado, N = pase de N clases
+  isActive     Boolean  @default(true)
+  stripePriceId String?
+  createdAt    DateTime @default(now())
+
+  business    Business     @relation(fields: [businessId], references: [id])
+  memberships Membership[]
+
+  @@index([businessId])
+}
+
+// ─── Membresía activa del socio ────────────────────────────────────────────
+model Membership {
+  id                 String           @id @default(cuid())
+  memberId           String
+  planId             String
+  status             MembershipStatus @default(ACTIVE)
+  startDate          DateTime
+  endDate            DateTime
+  classesUsed        Int              @default(0)
+  stripeSubscriptionId String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  member   Member    @relation(fields: [memberId], references: [id])
+  plan     Plan      @relation(fields: [planId], references: [id])
+  payments Payment[]
+  checkins Checkin[]
+
+  @@index([memberId])
+}
+
+enum MembershipStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+  PAUSED
+}
+
+// ─── Pagos ─────────────────────────────────────────────────────────────────
+model Payment {
+  id               String        @id @default(cuid())
+  memberId         String
+  membershipId     String
+  amount           Float
+  currency         String        @default("mxn")
+  status           PaymentStatus
+  stripePaymentId  String?
+  receiptUrl       String?
+  paidAt           DateTime?
+  createdAt        DateTime      @default(now())
+
+  member     Member     @relation(fields: [memberId], references: [id])
+  membership Membership @relation(fields: [membershipId], references: [id])
+
+  @@index([memberId])
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+// ─── Check-ins ─────────────────────────────────────────────────────────────
+model Checkin {
+  id           String   @id @default(cuid())
+  membershipId String
+  checkedInAt  DateTime @default(now())
+  method       String   @default("qr")
+
+  membership Membership @relation(fields: [membershipId], references: [id])
+
+  @@index([membershipId])
+}
