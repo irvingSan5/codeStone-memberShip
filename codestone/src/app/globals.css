@@ -1,0 +1,34 @@
+/* src/app/globals.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: 'DM Sans', sans-serif;
+
+  /* Paleta codeStone */
+  --cs-bg:        #0f0f11;
+  --cs-surface:   #18181c;
+  --cs-border:    #2a2a30;
+  --cs-text:      #f0eff4;
+  --cs-muted:     #8b8a96;
+  --cs-accent:    #6c63ff;
+  --cs-accent-h:  #8b83ff;
+  --cs-success:   #22c55e;
+  --cs-danger:    #ef4444;
+  --cs-warning:   #f59e0b;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-sans);
+  background: var(--cs-bg);
+  color: var(--cs-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar sutil */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--cs-bg); }
+::-webkit-scrollbar-thumb { background: var(--cs-border); border-radius: 3px; }
